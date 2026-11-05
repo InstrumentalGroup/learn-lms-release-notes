@@ -1,0 +1,12 @@
+title: Learn LMS Release Notes
+description: What changed in each Learn LMS release, including updates to the theme modules you use in HubSpot.
+theme: minima
+markdown: kramdown
+permalink: /:year/:month/:day/:title/
+show_excerpts: true
+minima:
+  skin: auto
+header_pages:
+  - index.md
+url: https://instrumentalgroup.github.io
+baseurl: /learn-lms-release-notes
