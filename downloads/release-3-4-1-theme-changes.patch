@@ -1,0 +1,350 @@
+diff --git a/macros/_lms_next_chapter_macro.html b/macros/_lms_next_chapter_macro.html
+index 8eea267..24296a2 100644
+--- a/macros/_lms_next_chapter_macro.html
++++ b/macros/_lms_next_chapter_macro.html
+@@ -97,7 +97,7 @@
+     const container = menuItem.parents('.accordion-container');
+     const elements = container.find('.tabs > li').length;
+ 
+-    if ((feature == 'hs_video' || feature == 'yt_video') && videoStatus != 'completed') {
++    if ((feature == 'hs_video' || feature == 'yt_video' || feature == 'livid_video') && videoStatus != 'completed') {
+       console.log('Video not completed')
+       $(this)[0].textContent = oldNextBtnText;
+       const contentEl = $(this).parents('.tab_content')[0];
+diff --git a/macros/_lms_next_chapter_macro_v2.html b/macros/_lms_next_chapter_macro_v2.html
+index 557f95d..8381d0e 100644
+--- a/macros/_lms_next_chapter_macro_v2.html
++++ b/macros/_lms_next_chapter_macro_v2.html
+@@ -222,7 +222,7 @@
+ 
+       // Gate progression on video/audio completion.
+       const videoStatus = $tabContent.find('.video-status').val();
+-      if ((feature === 'hs_video' || feature === 'yt_video') && videoStatus !== 'completed') {
++      if ((feature === 'hs_video' || feature === 'yt_video' || feature === 'livid_video') && videoStatus !== 'completed') {
+         scrollToTopOf(contentEl);
+         pulsate(contentEl);
+         return;
+diff --git a/modules/lms_course_content.module/fields.json b/modules/lms_course_content.module/fields.json
+index 5b92e49..497728b 100644
+--- a/modules/lms_course_content.module/fields.json
++++ b/modules/lms_course_content.module/fields.json
+@@ -66,7 +66,7 @@
+       "required" : false,
+       "locked" : false,
+       "display" : "select",
+-      "choices" : [ [ "none", "Only Text" ], [ "image", "Image" ], [ "yt_video", "YouTube Video" ], [ "hs_video", "HubSpot video" ], [ "gslides_link", "Google Slides Link" ], [ "ppt_link", "Power Point Link" ], [ "pdf_file", "PDF" ], [ "audio", "Audio" ], [ "quiz", "Quiz" ] ],
++      "choices" : [ [ "none", "Only Text" ], [ "image", "Image" ], [ "yt_video", "YouTube Video" ], [ "hs_video", "HubSpot video" ], [ "livid_video", "Livid video" ], [ "gslides_link", "Google Slides Link" ], [ "ppt_link", "Power Point Link" ], [ "pdf_file", "PDF" ], [ "audio", "Audio" ], [ "quiz", "Quiz" ] ],
+       "multiple" : false,
+       "reordering_enabled" : true,
+       "preset" : null,
+@@ -197,6 +197,27 @@
+       "show_emoji_picker" : false,
+       "type" : "text",
+       "default" : "A9k_bxkUpA4"
++    }, {
++      "id" : "5c1bb1ff-936e-4379-9d90-a8ccdc74b679",
++      "name" : "livid_embed",
++      "display_width" : null,
++      "label" : "Livid embed code",
++      "required" : false,
++      "locked" : false,
++      "help_text" : "Paste the embed code Livid gives you (the <iframe> snippet) or just the embed URL. Only the video URL is used; add any extra text in the lesson text.",
++      "validation_regex" : "",
++      "visibility" : {
++        "controlling_field" : "8aa7873d-8f76-de1d-59bb-84cfcc07f405",
++        "controlling_field_path" : null,
++        "controlling_value_regex" : "livid_video",
++        "property" : null,
++        "operator" : "EQUAL",
++        "access" : null
++      },
++      "allow_new_line" : true,
++      "show_emoji_picker" : false,
++      "type" : "text",
++      "default" : ""
+     }, {
+       "id" : "bf65e275-4bc9-96cc-8e7e-b548d89e71af",
+       "name" : "hubspot_video",
+diff --git a/modules/lms_course_content.module/module.html b/modules/lms_course_content.module/module.html
+index fd814d1..da2a1fb 100644
+--- a/modules/lms_course_content.module/module.html
++++ b/modules/lms_course_content.module/module.html
+@@ -287,6 +287,18 @@ Last Position: {{ last_position }}
+         <div class="youtube-embed" data-video-id="{{ lesson.youtube_id }}" data-global-index="{{ all_chapters|length - 1 }}"></div>
+         <input class="video-status" data-status-id="{{ lesson.youtube_id }}" data-global-index="{{ all_chapters|length - 1 }}" name="video-status" type="text" style="display: none" value="">
+ 
++        {% elif lesson.feature_choice == "livid_video" %}
++        {# Livid: the pasted embed code (or bare URL) is reduced to its iframe src and
++           re-rendered here, so only a https URL ever reaches the page. module.html's
++           Player.js loader attaches to iframe.livid-player. #}
++        {% set livid_src = lesson.livid_embed|regex_replace('(?s)^.*?<iframe[^>]*?\\ssrc\\s*=\\s*"([^"]+)".*$', '$1')|trim %}
++        {% if livid_src is string_startingwith "https://" %}
++          <div class="livid-embed" data-global-index="{{ all_chapters|length - 1 }}">
++            <iframe class="livid-player" loading="lazy" src="{{ livid_src|escape_attr }}" title="{{ lesson.title|escape_attr }}" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture; web-share" allowfullscreen frameborder="0" referrerpolicy="strict-origin-when-cross-origin"></iframe>
++          </div>
++          <input class="video-status" data-status-id="livid-{{ all_chapters|length - 1 }}" data-global-index="{{ all_chapters|length - 1 }}" name="video-status" type="text" style="display: none" value="">
++        {% endif %}
++
+         {% elif lesson.feature_choice == "hs_video" %}
+         {% set max_width = lesson.hubspot_video.size_type == 'auto_custom_max' ? lesson.hubspot_video.max_width : lesson.hubspot_video.width %}
+         {% set max_height = lesson.hubspot_video.size_type == 'auto_custom_max' ? lesson.hubspot_video.max_height : lesson.hubspot_video.height %}
+@@ -453,6 +465,49 @@ Last Position: {{ last_position }}
+ </script>
+ {% end_require_js %}
+ 
++{% require_js %}
++<script>
++  // Livid videos speak the Player.js protocol (https://github.com/embedly/player.js).
++  // window.lividPlayers is polled by module.js's video tracker, same as ytPlayers.
++  window.lividPlayers = [];
++
++  (function () {
++    function attach(iframe) {
++      var player = new playerjs.Player(iframe);
++      var entry = { player: player, iframe: iframe, ready: false, playing: false, ended: false, duration: 0 };
++      window.lividPlayers.push(entry);
++
++      function markCompleted() {
++        var lesson = iframe.closest('.tab_content');
++        var input = lesson && lesson.querySelector('.video-status');
++        if (input) input.value = 'completed';
++      }
++
++      player.on('ready', function () {
++        entry.ready = true;
++        player.getDuration(function (d) { if (d > 0) entry.duration = d; });
++      });
++      player.on('play', function () { entry.playing = true; entry.ended = false; });
++      player.on('pause', function () { entry.playing = false; });
++      player.on('ended', function () { entry.playing = false; entry.ended = true; markCompleted(); });
++      player.on('timeupdate', function (data) {
++        if (data && data.duration > 0) entry.duration = data.duration;
++      });
++    }
++
++    function init() {
++      document.querySelectorAll('iframe.livid-player').forEach(attach);
++    }
++
++    if (!document.querySelector('iframe.livid-player')) return;
++    var s = document.createElement('script');
++    s.src = 'https://cdn.embed.ly/player-0.1.0.min.js';
++    s.onload = init;
++    document.head.appendChild(s);
++  })();
++</script>
++{% end_require_js %}
++
+ {% require_css %}
+ <style>
+   .{{name}} {
+diff --git a/modules/lms_course_content.module/module.js b/modules/lms_course_content.module/module.js
+index 16c6f66..a043a19 100644
+--- a/modules/lms_course_content.module/module.js
++++ b/modules/lms_course_content.module/module.js
+@@ -753,6 +753,16 @@ $(document).ready(function () {
+           });
+         });
+ 
++        (window.lividPlayers || []).forEach(function (p) {
++          const embed = p.iframe && p.iframe.closest('.livid-embed');
++          out.push({
++            index: embed ? Number(embed.getAttribute('data-global-index')) : NaN,
++            playing: p.playing,
++            ended: p.ended,
++            duration: p.duration || 0
++          });
++        });
++
+         if (window.hsVideoApi && typeof window.hsVideoApi.getPlayers === 'function') {
+           Array.prototype.forEach.call(window.hsVideoApi.getPlayers(), function (video) {
+             const input = video.options && document.querySelector(`.video-status[data-status-id="${video.options.id}"]`);
+@@ -874,7 +884,7 @@ $(document).ready(function () {
+ 
+       // Block finish if video hasn't been completed
+       const videoStatus = $(this).parents('.tab_content').find('.video-status').val();
+-      if ((feature == 'hs_video' || feature == 'yt_video' || feature == 'audio') && videoStatus != 'completed') {
++      if ((feature == 'hs_video' || feature == 'yt_video' || feature == 'livid_video' || feature == 'audio') && videoStatus != 'completed') {
+         console.log('Video not completed - cannot finish course');
+         $(this)[0].innerHTML = oldBtnText;
+         const contentEl = $(this).parents('.tab_content')[0];
+diff --git a/modules/lms_course_content_v2.module/fields.json b/modules/lms_course_content_v2.module/fields.json
+index 7cc396b..38cf048 100644
+--- a/modules/lms_course_content_v2.module/fields.json
++++ b/modules/lms_course_content_v2.module/fields.json
+@@ -90,6 +90,10 @@
+                 "hs_video",
+                 "HubSpot video"
+               ],
++              [
++                "livid_video",
++                "Livid video"
++              ],
+               [
+                 "gslides_link",
+                 "Google Slides"
+@@ -168,6 +172,28 @@
+             "type": "text",
+             "default": "A9k_bxkUpA4"
+           },
++          {
++            "id": "d690de7a-809e-4de8-b7a1-ed740fd995e6",
++            "name": "livid_embed",
++            "display_width": null,
++            "label": "Livid embed code",
++            "required": false,
++            "locked": false,
++            "help_text": "Paste the embed code Livid gives you (the <iframe> snippet) or just the embed URL. Only the video URL is used; add any extra text in the lesson text.",
++            "validation_regex": "",
++            "visibility": {
++              "controlling_field": "8aa7873d-8f76-de1d-59bb-84cfcc07f405",
++              "controlling_field_path": null,
++              "controlling_value_regex": "livid_video",
++              "property": null,
++              "operator": "EQUAL",
++              "access": null
++            },
++            "allow_new_line": true,
++            "show_emoji_picker": false,
++            "type": "text",
++            "default": ""
++          },
+           {
+             "id": "bf65e275-4bc9-96cc-8e7e-b548d89e71af",
+             "name": "hubspot_video",
+diff --git a/modules/lms_course_content_v2.module/module.html b/modules/lms_course_content_v2.module/module.html
+index e24d674..7f5dbff 100644
+--- a/modules/lms_course_content_v2.module/module.html
++++ b/modules/lms_course_content_v2.module/module.html
+@@ -397,6 +397,18 @@ Last Position: {{ last_position }}
+         <div class="youtube-embed" data-video-id="{{ lesson.youtube_id }}" data-global-index="{{ all_chapters|length - 1 }}"></div>
+         <input class="video-status" data-status-id="{{ lesson.youtube_id }}" data-global-index="{{ all_chapters|length - 1 }}" name="video-status" type="text" style="display: none" value="">
+ 
++        {% elif lesson.feature_choice == "livid_video" %}
++        {# Livid: the pasted embed code (or bare URL) is reduced to its iframe src and
++           re-rendered here, so only a https URL ever reaches the page. module.html's
++           Player.js loader attaches to iframe.livid-player. #}
++        {% set livid_src = lesson.livid_embed|regex_replace('(?s)^.*?<iframe[^>]*?\\ssrc\\s*=\\s*"([^"]+)".*$', '$1')|replace('&amp;', '&')|trim %}
++        {% if livid_src is string_startingwith "https://" %}
++          <div class="livid-embed" data-global-index="{{ all_chapters|length - 1 }}">
++            <iframe class="livid-player" src="{{ livid_src|escape_attr }}" title="{{ lesson.title|escape_attr }}" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture; web-share" allowfullscreen frameborder="0" referrerpolicy="strict-origin-when-cross-origin"></iframe>
++          </div>
++          <input class="video-status" data-status-id="livid-{{ all_chapters|length - 1 }}" data-global-index="{{ all_chapters|length - 1 }}" name="video-status" type="text" style="display: none" value="">
++        {% endif %}
++
+         {% elif lesson.feature_choice == "hs_video" %}
+         {% set max_width = lesson.hubspot_video.size_type == 'auto_custom_max' ? lesson.hubspot_video.max_width : lesson.hubspot_video.width %}
+         {% set max_height = lesson.hubspot_video.size_type == 'auto_custom_max' ? lesson.hubspot_video.max_height : lesson.hubspot_video.height %}
+@@ -565,6 +577,49 @@ Last Position: {{ last_position }}
+ </script>
+ {% end_require_js %}
+ 
++{% require_js %}
++<script>
++  // Livid videos speak the Player.js protocol (https://github.com/embedly/player.js).
++  // window.lividPlayers is polled by module.js's video tracker, same as ytPlayers.
++  window.lividPlayers = [];
++
++  (function () {
++    function attach(iframe) {
++      var player = new playerjs.Player(iframe);
++      var entry = { player: player, iframe: iframe, ready: false, playing: false, ended: false, duration: 0 };
++      window.lividPlayers.push(entry);
++
++      function markCompleted() {
++        var lesson = iframe.closest('.tab_content');
++        var input = lesson && lesson.querySelector('.video-status');
++        if (input) input.value = 'completed';
++      }
++
++      player.on('ready', function () {
++        entry.ready = true;
++        player.getDuration(function (d) { if (d > 0) entry.duration = d; });
++      });
++      player.on('play', function () { entry.playing = true; entry.ended = false; });
++      player.on('pause', function () { entry.playing = false; });
++      player.on('ended', function () { entry.playing = false; entry.ended = true; markCompleted(); });
++      player.on('timeupdate', function (data) {
++        if (data && data.duration > 0) entry.duration = data.duration;
++      });
++    }
++
++    function init() {
++      document.querySelectorAll('iframe.livid-player').forEach(attach);
++    }
++
++    if (!document.querySelector('iframe.livid-player')) return;
++    var s = document.createElement('script');
++    s.src = 'https://cdn.embed.ly/player-0.1.0.min.js';
++    s.onload = init;
++    document.head.appendChild(s);
++  })();
++</script>
++{% end_require_js %}
++
+ {% require_css %}
+ <style>
+   .{{name}} {
+diff --git a/modules/lms_course_content_v2.module/module.js b/modules/lms_course_content_v2.module/module.js
+index c8e6b73..0be00b9 100644
+--- a/modules/lms_course_content_v2.module/module.js
++++ b/modules/lms_course_content_v2.module/module.js
+@@ -927,6 +927,18 @@ $(document).ready(function () {
+           markCompletedLessons(storedCompleted);
+         }
+ 
++        // A lesson completed in an earlier visit never asks for its video again: the
++        // Next / Finish gates read each lesson's .video-status input, so flag it here.
++        // Done from the persisted set (just applied to the TOC above), not at click
++        // time, because "Mark lesson as complete" also adds `.completed` in-session and
++        // must not unlock a video that was never watched.
++        $(`${TOC_LESSON_SELECTOR}.completed`).each(function () {
++          const index = $(this).attr('data-global-index');
++          document.querySelectorAll(`.video-status[data-global-index="${index}"]`).forEach(function (el) {
++            el.value = 'completed';
++          });
++        });
++
+         // Restore persisted video watch state, so a video watched to the end stays
+         // "watched" (and keeps its Next button gate open) after a reload.
+         videoTracker.seed(enrollment.videoProgress);
+@@ -1260,6 +1272,16 @@ $(document).ready(function () {
+           });
+         });
+ 
++        (window.lividPlayers || []).forEach(function (p) {
++          const embed = p.iframe && p.iframe.closest('.livid-embed');
++          out.push({
++            index: embed ? Number(embed.getAttribute('data-global-index')) : NaN,
++            playing: p.playing,
++            ended: p.ended,
++            duration: p.duration || 0
++          });
++        });
++
+         if (window.hsVideoApi && typeof window.hsVideoApi.getPlayers === 'function') {
+           Array.prototype.forEach.call(window.hsVideoApi.getPlayers(), function (video) {
+             const input = video.options && document.querySelector(`.video-status[data-status-id="${video.options.id}"]`);
+@@ -1389,7 +1411,7 @@ $(document).ready(function () {
+ 
+       // Block finish if video hasn't been completed
+       const videoStatus = $(this).parents('.tab_content').find('.video-status').val();
+-      if ((feature == 'hs_video' || feature == 'yt_video' || feature == 'audio') && videoStatus != 'completed') {
++      if ((feature == 'hs_video' || feature == 'yt_video' || feature == 'livid_video' || feature == 'audio') && videoStatus != 'completed') {
+         console.log('Video not completed - cannot finish course');
+         $(this)[0].innerHTML = oldBtnText;
+         const contentEl = $(this).parents('.tab_content')[0];
+@@ -1486,6 +1508,13 @@ var stopVideos = function (root) {
+     } catch (e) { /* player not ready yet */ }
+   });
+ 
++  // Livid players (Player.js): pause in place.
++  (window.lividPlayers || []).forEach(function (entry) {
++    try {
++      if (inRoot(entry.iframe)) entry.player.pause();
++    } catch (e) { /* player not ready yet */ }
++  });
++
+   // Native media: HubSpot video (when rendered as <video>) and lesson audio.
+   Array.prototype.forEach.call(root.querySelectorAll('video, audio'), function (media) {
+     if (!media.paused) media.pause();
