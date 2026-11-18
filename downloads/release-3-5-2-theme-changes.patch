@@ -1,0 +1,56 @@
+diff --git a/macros/_lms_quiz_macro.html b/macros/_lms_quiz_macro.html
+index 61c42e9..46d667c 100644
+--- a/macros/_lms_quiz_macro.html
++++ b/macros/_lms_quiz_macro.html
+@@ -899,6 +899,11 @@
+     tryBtn_{{ quiz_index }}.addEventListener('click', (event) => {
+       quizFormEl__quiz_{{ quiz_index }}.classList.remove('hidden');
+       document.getElementById('quiz-failure--quiz-{{ quiz_index }}').classList.add('hidden');
++      // Start over: clear every answer and go back to question 1. The stepper
++      // jumps to question 1 when it sees the class change, so drop and re-add it
++      // (a plain add is a no-op on the second retry and nothing would reset).
++      quizFormEl__quiz_{{ quiz_index }}.reset();
++      quizFormEl__quiz_{{ quiz_index }}.classList.remove('try-again');
+       quizFormEl__quiz_{{ quiz_index }}.classList.add('try-again');
+       quizFormEl__quiz_{{ quiz_index }}.parentElement.querySelector('.quiz-submit').style.display = 'none';
+     });
+@@ -910,6 +915,11 @@
+     retryBtn_{{ quiz_index }}.addEventListener('click', (event) => {
+       quizFormEl__quiz_{{ quiz_index }}.classList.remove('hidden');
+       document.getElementById('quiz-success--quiz-{{ quiz_index }}').classList.add('hidden');
++      // Start over: clear every answer and go back to question 1. The stepper
++      // jumps to question 1 when it sees the class change, so drop and re-add it
++      // (a plain add is a no-op on the second retry and nothing would reset).
++      quizFormEl__quiz_{{ quiz_index }}.reset();
++      quizFormEl__quiz_{{ quiz_index }}.classList.remove('try-again');
+       quizFormEl__quiz_{{ quiz_index }}.classList.add('try-again');
+       quizFormEl__quiz_{{ quiz_index }}.parentElement.querySelector('.quiz-submit').style.display = 'none';
+     });
+diff --git a/macros/_lms_quiz_macro_v2.html b/macros/_lms_quiz_macro_v2.html
+index 0f68803..c78b641 100644
+--- a/macros/_lms_quiz_macro_v2.html
++++ b/macros/_lms_quiz_macro_v2.html
+@@ -952,6 +952,11 @@
+     tryBtn_{{ quiz_index }}.addEventListener('click', (event) => {
+       quizFormEl__quiz_{{ quiz_index }}.classList.remove('hidden');
+       document.getElementById('quiz-failure--quiz-{{ quiz_index }}').classList.add('hidden');
++      // Start over: clear every answer and go back to question 1. The stepper
++      // jumps to question 1 when it sees the class change, so drop and re-add it
++      // (a plain add is a no-op on the second retry and nothing would reset).
++      quizFormEl__quiz_{{ quiz_index }}.reset();
++      quizFormEl__quiz_{{ quiz_index }}.classList.remove('try-again');
+       quizFormEl__quiz_{{ quiz_index }}.classList.add('try-again');
+       quizFormEl__quiz_{{ quiz_index }}.parentElement.querySelector('.quiz-submit').style.display = 'none';
+     });
+@@ -963,6 +968,11 @@
+     retryBtn_{{ quiz_index }}.addEventListener('click', (event) => {
+       quizFormEl__quiz_{{ quiz_index }}.classList.remove('hidden');
+       document.getElementById('quiz-success--quiz-{{ quiz_index }}').classList.add('hidden');
++      // Start over: clear every answer and go back to question 1. The stepper
++      // jumps to question 1 when it sees the class change, so drop and re-add it
++      // (a plain add is a no-op on the second retry and nothing would reset).
++      quizFormEl__quiz_{{ quiz_index }}.reset();
++      quizFormEl__quiz_{{ quiz_index }}.classList.remove('try-again');
+       quizFormEl__quiz_{{ quiz_index }}.classList.add('try-again');
+       quizFormEl__quiz_{{ quiz_index }}.parentElement.querySelector('.quiz-submit').style.display = 'none';
+     });
